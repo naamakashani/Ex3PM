@@ -1,23 +1,22 @@
-# This is a sample Python script.
+# Naama Kashani 312400476 Shachar Engelman
+import math
 import numpy as np
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 classes_num = 9
 article_num = 2124
 
-# global parametrs
-# estimation step parametrs
-# numpy 2-D array of size claaes_num , artical_num
+# define EM parameters
+# estimation step parameters
+# numpy 2-D array of size classes , article_num
 W = np.zeros((article_num, classes_num))
 
-# maximization step parametrs
+# maximization step parameters
 # probability for 9 classes
 alpha = []
 # list of dictionaries for 9 classes, for each word what is the Pik
 Pik = [{}, {}, {}, {}, {}, {}, {}, {}, {}]
 
-# list of 2124 dictionary for each artical create dictionary of words and their counts
+# list of 2124 dictionary for each article create dictionary of words and their counts
 ntk = []
 
 # dictionary of all words in the develop.txt file and their counts (filter out lower than 3)
@@ -69,7 +68,32 @@ def initial_W():
 
 
 def estimation_step():
-    pass
+    # update the W values using Underflow Scaling
+    k = 10
+    # for each artical update the Wi
+    for i in range(article_num):
+        list_Zj = []
+        # run for all classes
+        for j in range(classes_num):
+            # numerator of the Wi
+            Zit = math.log((alpha[j]))
+            for item in Pik[j]:
+                Zit += math.log(item[1]) * float(ntk[i][item[0]])
+            list_Zj.append(Zit)
+
+        max_Zit = max(list_Zj)
+        # subtract max_Zit from all Zit
+        new_list_Zj = [x - max_Zit for x in list_Zj]
+        sum_all_grader = 0
+        for m in range(classes_num):
+
+            if new_list_Zj[m] < -1 * k:
+                W[i][m] = 0
+            else:
+                W[i][m] = math.exp(new_list_Zj[m])
+                sum_all_grader += W[i][m]
+        for m in range(classes_num):
+            W[i][m] = float(W[i][m]) / sum_all_grader
 
 
 def maximiztion_step():
