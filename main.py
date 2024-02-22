@@ -12,15 +12,15 @@ W = np.zeros((article_num, classes_num))
 
 # maximization step parameters
 # probability for 9 classes
-alpha = []
+alpha = [0]*9
 # list of dictionaries for 9 classes, for each word what is the Pik
 Pik = [{}, {}, {}, {}, {}, {}, {}, {}, {}]
 
 # list of 2124 dictionary for each article create dictionary of words and their counts
 ntk = []
 
-# dictionary of all words in the develop.txt file and their counts (filter out lower than 3)
-vocabulary_development = {}
+# dictionary of all words in the develop.txt file after filter out lower than 3
+vocabulary = set()
 
 
 def initial_ntk_and_vocabulary():
@@ -29,6 +29,7 @@ def initial_ntk_and_vocabulary():
 
 
     """
+    vocabulary_development = {}
     # open develop.txt file and create dictionary for each article of number of words
     with open('develop.txt', 'r') as file:
         lines = file.read().splitlines()
@@ -56,6 +57,7 @@ def initial_ntk_and_vocabulary():
     for key in list(vocabulary_development.keys()):
         if vocabulary_development[key] < 3:
             del vocabulary_development[key]
+    vocabulary.update(vocabulary_development.keys())
 
 
 def initial_W():
@@ -109,11 +111,25 @@ def alpha_calc():
     # normalize alpha list
     sum_alpha = sum(alpha)
     for i in range(classes_num):
-        alpha[i] = alpha[i] / sum_alpha
+        alpha[i] = float(alpha[i]) / sum_alpha
+
+
+def p_cal():
+    lamda = 0.01
+    for i in range(classes_num):
+        for word in vocabulary:
+            numerator = 0
+            denominator = 0
+            for k in range(article_num):
+                if word in ntk[k]:
+                    numerator += W[k][i] * (ntk[k][word])
+                denominator += W[k][i] * sum(ntk[k].values())
+            Pik[i][word] = float(numerator + lamda) / (denominator + lamda * len(vocabulary))
 
 
 def maximiztion_step():
     alpha_calc()
+    p_cal()
 
 
 def calc_liklihood():
@@ -149,8 +165,11 @@ def EM():
         con_flag = check_stop_criterion(liklihood_list)
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
+def main():
     initial_ntk_and_vocabulary()
+    initial_W()
+    EM()
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+if __name__ == '__main__':
+    main()
