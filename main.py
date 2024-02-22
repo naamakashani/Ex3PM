@@ -96,8 +96,24 @@ def estimation_step():
             W[i][m] = float(W[i][m]) / sum_all_grader
 
 
+def alpha_calc():
+    epsilon = 0.01
+    for i in range(classes_num):
+        sum_class = 0
+        for j in range(article_num):
+            sum_class += W[j][i]
+        if sum_class == 0:
+            alpha[i] = epsilon
+        else:
+            alpha[i] = sum_class / article_num
+    # normalize alpha list
+    sum_alpha = sum(alpha)
+    for i in range(classes_num):
+        alpha[i] = alpha[i] / sum_alpha
+
+
 def maximiztion_step():
-    pass
+    alpha_calc()
 
 
 def calc_liklihood():
