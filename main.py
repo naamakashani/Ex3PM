@@ -55,7 +55,7 @@ def initial_ntk_and_vocabulary():
 
     # filter out words of vocabulary_development that are less than 3
     for key in list(vocabulary_development.keys()):
-        if vocabulary_development[key] < 3:
+        if vocabulary_development[key] <= 3:
             del vocabulary_development[key]
     vocabulary.update(vocabulary_development.keys())
 
