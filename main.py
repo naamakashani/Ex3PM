@@ -79,8 +79,12 @@ def estimation_step():
         for j in range(classes_num):
             # numerator of the Wi
             Zit = math.log((alpha[j]))
-            for item in Pik[j]:
-                Zit += math.log(item[1]) * float(ntk[i][item[0]])
+            for key, value in Pik[j].items():
+                if key in ntk[i]:
+                    ntk_value = ntk[i][key]
+                else:
+                    ntk_value = 0
+                Zit += float(ntk_value * math.log(value))
             list_Zj.append(Zit)
 
         max_Zit = max(list_Zj)
@@ -132,16 +136,50 @@ def maximiztion_step():
     p_cal()
 
 
-def calc_liklihood():
-    pass
+def calc_log_liklihood():
+    ln_L = 0
+    k = 10
+    # for each artical update the Wi
+    for i in range(article_num):
+        list_Zj = []
+        # run for all classes
+        for j in range(classes_num):
+            # numerator of the Wi
+            Zit = math.log((alpha[j]))
+            for key, value in Pik[j].items():
+                if key in ntk[i]:
+                    ntk_value = ntk[i][key]
+                else:
+                    ntk_value = 0
+                Zit += float(ntk_value * math.log(value))
+            list_Zj.append(Zit)
+
+        max_Zit = max(list_Zj)
+        # subtract max_Zit from all Zit
+        new_list_Zj = [x - max_Zit for x in list_Zj]
+        sum_all_grader = 0
+        for m in range(classes_num):
+            if new_list_Zj[m] >= -1 * k:
+                sum_all_grader += math.exp(new_list_Zj[m])
+        ln_L += max_Zit + math.log(sum_all_grader)
+    return ln_L
 
 
-def clac_perlexity():
-    pass
+def clac_perlexity(log_likelihood):
+    # perlexity = e ^ (-1 /N * log_likelihood). N ia the number of words
+    preplexity = math.exp(-1 / len(vocabulary) * log_likelihood)
+    return preplexity
 
 
-def check_stop_criterion():
-    pass
+
+def check_stop_criterion(log_liklihood_list):
+    # return false if the difference between the last two log_liklihood is less than 0.1
+    if len(log_liklihood_list) > 1:
+        if abs(log_liklihood_list[-1] - log_liklihood_list[-2]) < 0.1:
+            return False
+    return True
+
+
 
 
 def EM():
@@ -155,13 +193,13 @@ def EM():
         maximiztion_step()
 
         # calc_liklihood
-        likelihood = calc_liklihood()
-        liklihood_list.append(likelihood)
+        log_likelihood = calc_log_liklihood()
+        liklihood_list.append(log_likelihood)
 
-        print(likelihood)
+        print("log_likelihood", log_likelihood)
         # calc_perlexity
-        perlexity = clac_perlexity()
-        print(perlexity)
+        perlexity = clac_perlexity(log_likelihood)
+        print("perlexity", perlexity)
         con_flag = check_stop_criterion(liklihood_list)
 
 
