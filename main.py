@@ -276,6 +276,24 @@ def create_matrix():
             for topic in topics_artical[i]:
                 matrix[i][topic] += 1
 
+    lines = []
+    # Iterate over each row in the matrix
+    for i, row in enumerate(matrix):
+        # Extract counts from the row and convert to string
+        counts = ",".join(str(c) for t, c in row.items())
+        # Combine index, counts, and total count
+        line = f"{i},{counts},{counter[i]}"
+        lines.append(line)
+
+    # Create header line with topics
+    header_line = "," + ",".join(topics)
+    lines = sorted(lines[1:], key=lambda x: int(x.split(',')[1]), reverse=True)
+    # Insert header line at the beginning
+    lines.insert(0, header_line)
+    fh = open("matrix.csv", "w")
+    fh.write("\n".join(lines))
+    fh.close()
+
 
 
 
