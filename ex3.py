@@ -1,6 +1,3 @@
-"""
-Amit Moryossef Nurit Cohen Inger    207339102 038451381
-"""
 
 import sys
 import numpy as np

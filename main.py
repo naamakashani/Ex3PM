@@ -12,7 +12,7 @@ W = np.zeros((article_num, classes_num))
 
 # maximization step parameters
 # probability for 9 classes
-alpha = [0]*9
+alpha = [0] * 9
 # list of dictionaries for 9 classes, for each word what is the Pik
 Pik = [{}, {}, {}, {}, {}, {}, {}, {}, {}]
 
@@ -22,6 +22,10 @@ ntk = []
 # dictionary of all words in the develop.txt file after filter out lower than 3
 vocabulary = set()
 
+topics = []
+
+topics_artical = []
+
 
 def initial_ntk_and_vocabulary():
     """
@@ -30,9 +34,18 @@ def initial_ntk_and_vocabulary():
 
     """
     vocabulary_development = {}
+
     # open develop.txt file and create dictionary for each article of number of words
     with open('develop.txt', 'r') as file:
         lines = file.read().splitlines()
+        parts = lines[0].split('t')[2:]
+        topics = []
+        for topic in parts:
+            # if topic contain '>' remove it
+            if '>' in topic:
+                topic = topic.split('>')[0]
+                topics.append(topic)
+        topics_artical.append(topics)
         start_point = lines[2:]
         i = 0
         for artical in start_point:
@@ -51,6 +64,17 @@ def initial_ntk_and_vocabulary():
                     else:
                         word_counts[word] = 1
                 ntk.append(word_counts)
+
+            if i % 2 == 0:
+                parts = artical.split('t')[2:]
+                topics = []
+                for topic in parts:
+                    # if topic contain '>' remove it
+                    if '>' in topic:
+                        topic = topic.split('>')[0]
+                        topics.append(topic)
+                topics_artical.append(topics)
+
             i += 1
 
     # filter out words of vocabulary_development that are less than 3
@@ -171,15 +195,12 @@ def clac_perlexity(log_likelihood):
     return preplexity
 
 
-
 def check_stop_criterion(log_liklihood_list):
     # return false if the difference between the last two log_liklihood is less than 0.1
     if len(log_liklihood_list) > 1:
         if abs(log_liklihood_list[-1] - log_liklihood_list[-2]) < 0.1:
             return False
     return True
-
-
 
 
 def EM():
@@ -205,14 +226,16 @@ def EM():
         con_flag = check_stop_criterion(liklihood_list)
     return liklihood_list, pep_list
 
+
 def plot_liklihood(liklihood_list):
     plt.plot(liklihood_list)
     plt.xlabel('Iteration')
     plt.ylabel('Log Likelihood')
     plt.title('Log Likelihood')
     plt.show()
-    #save the plot
+    # save the plot
     plt.savefig('Log_Likelihood.png')
+
 
 def plot_perlexity(pep_list):
     plt.plot(pep_list)
@@ -220,16 +243,38 @@ def plot_perlexity(pep_list):
     plt.ylabel('Perlexity')
     plt.title('Perlexity')
     plt.show()
-    #save the plot
+    # save the plot
     plt.savefig('Perlexity.png')
 
+
 def hard_assignment():
-    #run on W and for each artical take the max value
+    # run on W and for each artical take the max value
     hard_assignment_list = []
     for i in range(article_num):
         max_index = W[i].index(max(W[i]))
         hard_assignment_list.append(max_index)
     return hard_assignment_list
+
+
+def save_topics():
+    with open('topics.txt', 'r') as file:
+        lines = file.read().splitlines()
+        for line in lines:
+            line = line.strip()
+            if line == '':
+                continue
+            topics.append(line)
+
+
+def create_matrix():
+    matrix = [{topic: 0 for topic in len(topics)} for i in range(classes_num)]
+    counter = np.zeros(classes_num)
+    for i in range(article_num):
+        if hard_assignment()[i] == i:
+            counter[i] += 1
+            # add 1 for all topics in the header of this article
+            for topic in topics_artical[i]:
+                matrix[i][topic] += 1
 
 
 
@@ -241,7 +286,7 @@ def main():
     plot_liklihood(liklihood_list)
     plot_perlexity(perplexity_list)
     hard_assignment_list = hard_assignment()
-
+    save_topics()
 
 
 if __name__ == '__main__':
