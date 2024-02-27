@@ -188,6 +188,7 @@ def EM():
     maximiztion_step()
     con_flag = True
     liklihood_list = []
+    pep_list = []
     while (con_flag):
         estimation_step()
         maximiztion_step()
@@ -199,14 +200,48 @@ def EM():
         print("log_likelihood", log_likelihood)
         # calc_perlexity
         perlexity = clac_perlexity(log_likelihood)
+        pep_list.append(perlexity)
         print("perlexity", perlexity)
         con_flag = check_stop_criterion(liklihood_list)
+    return liklihood_list, pep_list
+
+def plot_liklihood(liklihood_list):
+    plt.plot(liklihood_list)
+    plt.xlabel('Iteration')
+    plt.ylabel('Log Likelihood')
+    plt.title('Log Likelihood')
+    plt.show()
+    #save the plot
+    plt.savefig('Log_Likelihood.png')
+
+def plot_perlexity(pep_list):
+    plt.plot(pep_list)
+    plt.xlabel('Iteration')
+    plt.ylabel('Perlexity')
+    plt.title('Perlexity')
+    plt.show()
+    #save the plot
+    plt.savefig('Perlexity.png')
+
+def hard_assignment():
+    #run on W and for each artical take the max value
+    hard_assignment_list = []
+    for i in range(article_num):
+        max_index = W[i].index(max(W[i]))
+        hard_assignment_list.append(max_index)
+    return hard_assignment_list
+
+
 
 
 def main():
     initial_ntk_and_vocabulary()
     initial_W()
-    EM()
+    liklihood_list, perplexity_list = EM()
+    plot_liklihood(liklihood_list)
+    plot_perlexity(perplexity_list)
+    hard_assignment_list = hard_assignment()
+
 
 
 if __name__ == '__main__':
