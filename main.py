@@ -22,9 +22,12 @@ ntk = []
 # dictionary of all words in the develop.txt file after filter out lower than 3
 vocabulary = set()
 
+# list of given topics
 topics = []
 
+# list of header of topics for each article
 topics_artical = []
+clusters_labels = []
 
 
 def initial_ntk_and_vocabulary():
@@ -257,6 +260,10 @@ def hard_assignment():
 
 
 def save_topics():
+    """
+    save the topics in a file
+    :return:
+    """
     with open('topics.txt', 'r') as file:
         lines = file.read().splitlines()
         for line in lines:
@@ -267,6 +274,10 @@ def save_topics():
 
 
 def create_matrix():
+    """
+    create the confustion matrix of the articles
+    :return:
+    """
     matrix = [{topic: 0 for topic in len(topics)} for i in range(classes_num)]
     counter = np.zeros(classes_num)
     for i in range(article_num):
@@ -275,6 +286,11 @@ def create_matrix():
             # add 1 for all topics in the header of this article
             for topic in topics_artical[i]:
                 matrix[i][topic] += 1
+
+    # run on the matrix and for each line take the max index of column which is the assignment of cluster topic
+    for i in range(classes_num):
+        max_index = max(matrix[i], key=matrix[i].get)
+        clusters_labels.append(max_index)
 
     lines = []
     # Iterate over each row in the matrix
@@ -295,6 +311,14 @@ def create_matrix():
     fh.close()
 
 
+def accuracy_calc():
+    correct = 0
+    for artical in range(article_num):
+        topic = clusters_labels[hard_assignment()[artical]]
+        # check if the topic is in the topics of the article
+        if topic in topics_artical[artical]:
+            correct += 1
+    accuracy = correct / article_num
 
 
 def main():
