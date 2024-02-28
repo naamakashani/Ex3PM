@@ -253,6 +253,11 @@ def plot_perlexity(pep_list):
 
 
 def hard_assignment():
+    """
+    for each article take the cluster
+    :return:
+    """
+
     hard_assignment_list = np.argmax(W, axis=1)
     return hard_assignment_list
 
@@ -272,6 +277,9 @@ def save_topics():
 
 
 def get_last_element(line):
+    """
+    use the function to sort the confustion matrix based on descending order.
+    """
     elements = line.strip().split(',')
     return elements[-1]
 
@@ -284,17 +292,19 @@ def create_matrix(hard_assignment_list):
     matrix = [{topic: 0 for topic in topics} for i in range(classes_num)]
     counter = np.zeros(classes_num)
     for i in range(article_num):
+        #find the cluster for the article
         cluster = hard_assignment_list[i]
         counter[cluster] += 1
         # add 1 for all topics in the header of this article
         for topic in topics_artical[i]:
+            #add 1 for each topic on the header of the article
             matrix[cluster][topic] += 1
 
-    # run on the matrix and for each line take the max index of column which is the assignment of cluster topic
+    #assigne topic for each cluster
     for dictionary in matrix:
         max_key = max(dictionary, key=lambda k: dictionary[k])
         clusters_labels.append(max_key)
-
+    # create matrix
     lines = []
     # Iterate over each row in the matrix
     for i, row in enumerate(matrix):
@@ -307,6 +317,7 @@ def create_matrix(hard_assignment_list):
     # Create header line with topics
     header_line = "," + ",".join(topics)
     header_line = header_line[1:]
+    #sort matrix based on the last element
     sorted_lines = sorted(lines, key=get_last_element, reverse=True)
     # Insert header line at the beginning
     sorted_lines.insert(0, header_line)
@@ -316,6 +327,11 @@ def create_matrix(hard_assignment_list):
 
 
 def accuracy_calc(hard_assignment_list):
+    """
+    calculate accuracy based on hard assingment if it is one of the given topics for article.
+    :param hard_assignment_list:
+    :return:
+    """
     correct = 0
     for artical in range(article_num):
         topic = clusters_labels[hard_assignment_list[artical]]
