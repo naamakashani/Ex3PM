@@ -258,7 +258,6 @@ def hard_assignment():
     return hard_assignment_list
 
 
-
 def save_topics():
     """
     save the topics in a file
@@ -273,6 +272,11 @@ def save_topics():
             topics.append(line)
 
 
+def get_last_element(line):
+    elements = line.strip().split(',')
+    return elements[-1]
+
+
 def create_matrix(hard_assignment_list):
     """
     create the confustion matrix of the articles
@@ -281,20 +285,16 @@ def create_matrix(hard_assignment_list):
     matrix = [{topic: 0 for topic in topics} for i in range(classes_num)]
     counter = np.zeros(classes_num)
     for i in range(article_num):
-        if hard_assignment_list[i] == i:
-            counter[i] += 1
-            # add 1 for all topics in the header of this article
-            for topic in topics_artical[i]:
-                matrix[i][topic] += 1
+        cluster = hard_assignment_list[i]
+        counter[cluster] += 1
+        # add 1 for all topics in the header of this article
+        for topic in topics_artical[i]:
+            matrix[cluster][topic] += 1
 
     # run on the matrix and for each line take the max index of column which is the assignment of cluster topic
     for dictionary in matrix:
         max_key = max(dictionary, key=lambda k: dictionary[k])
-
-        # Find the index of the maximum value in the dictionary
-        max_index = list(dictionary.keys()).index(max_key)
-        clusters_labels.append(max_index)
-
+        clusters_labels.append(max_key)
 
     lines = []
     # Iterate over each row in the matrix
@@ -307,11 +307,12 @@ def create_matrix(hard_assignment_list):
 
     # Create header line with topics
     header_line = "," + ",".join(topics)
-    lines = sorted(lines[1:], key=lambda x: int(x.split(',')[1]), reverse=True)
+    header_line = header_line[1:]
+    sorted_lines = sorted(lines, key=get_last_element, reverse=True)
     # Insert header line at the beginning
-    lines.insert(0, header_line)
+    sorted_lines.insert(0, header_line)
     fh = open("matrix.csv", "w")
-    fh.write("\n".join(lines))
+    fh.write("\n".join(sorted_lines))
     fh.close()
 
 
@@ -323,15 +324,16 @@ def accuracy_calc(hard_assignment_list):
         if topic in topics_artical[artical]:
             correct += 1
     accuracy = correct / article_num
+    print(accuracy)
 
 
 def main():
     initial_ntk_and_vocabulary()
     initial_W()
     save_topics()
-    # liklihood_list, perplexity_list = EM()
-    # plot_liklihood(liklihood_list)
-    # plot_perlexity(perplexity_list)
+    liklihood_list, perplexity_list = EM()
+    plot_liklihood(liklihood_list)
+    plot_perlexity(perplexity_list)
     hard_assignment_list = hard_assignment()
     create_matrix(hard_assignment_list)
     accuracy_calc(hard_assignment_list)
