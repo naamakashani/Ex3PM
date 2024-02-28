@@ -329,6 +329,8 @@ def main():
     plot_perlexity(perplexity_list)
     hard_assignment_list = hard_assignment()
     save_topics()
+    create_matrix()
+    accuracy_calc()
 
 
 if __name__ == '__main__':
