@@ -278,7 +278,7 @@ def create_matrix(hard_assignment_list):
     create the confustion matrix of the articles
     :return:
     """
-    matrix = [{topic: 0 for topic in len(topics)} for i in range(classes_num)]
+    matrix = [{topic: 0 for topic in topics} for i in range(classes_num)]
     counter = np.zeros(classes_num)
     for i in range(article_num):
         if hard_assignment_list[i] == i:
@@ -288,9 +288,13 @@ def create_matrix(hard_assignment_list):
                 matrix[i][topic] += 1
 
     # run on the matrix and for each line take the max index of column which is the assignment of cluster topic
-    for i in range(classes_num):
-        max_index = max(matrix[i], key=matrix[i].get)
+    for dictionary in matrix:
+        max_key = max(dictionary, key=lambda k: dictionary[k])
+
+        # Find the index of the maximum value in the dictionary
+        max_index = list(dictionary.keys()).index(max_key)
         clusters_labels.append(max_index)
+
 
     lines = []
     # Iterate over each row in the matrix
