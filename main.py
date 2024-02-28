@@ -1,6 +1,7 @@
 # Naama Kashani 312400476 Shachar Engelman
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 classes_num = 9
 article_num = 2124
@@ -227,7 +228,7 @@ def EM():
         perlexity = clac_perlexity(log_likelihood)
         pep_list.append(perlexity)
         print("perlexity", perlexity)
-        con_flag=False
+        con_flag = False
         # con_flag = check_stop_criterion(liklihood_list)
     return liklihood_list, pep_list
 
@@ -253,12 +254,9 @@ def plot_perlexity(pep_list):
 
 
 def hard_assignment():
-    # run on W and for each artical take the max value
-    hard_assignment_list = []
-    for i in range(article_num):
-        max_index = W[i].index(max(W[i]))
-        hard_assignment_list.append(max_index)
+    hard_assignment_list = np.argmax(W, axis=1)
     return hard_assignment_list
+
 
 
 def save_topics():
@@ -275,7 +273,7 @@ def save_topics():
             topics.append(line)
 
 
-def create_matrix():
+def create_matrix(hard_assignment_list):
     """
     create the confustion matrix of the articles
     :return:
@@ -283,7 +281,7 @@ def create_matrix():
     matrix = [{topic: 0 for topic in len(topics)} for i in range(classes_num)]
     counter = np.zeros(classes_num)
     for i in range(article_num):
-        if hard_assignment()[i] == i:
+        if hard_assignment_list[i] == i:
             counter[i] += 1
             # add 1 for all topics in the header of this article
             for topic in topics_artical[i]:
@@ -313,10 +311,10 @@ def create_matrix():
     fh.close()
 
 
-def accuracy_calc():
+def accuracy_calc(hard_assignment_list):
     correct = 0
     for artical in range(article_num):
-        topic = clusters_labels[hard_assignment()[artical]]
+        topic = clusters_labels[hard_assignment_list[artical]]
         # check if the topic is in the topics of the article
         if topic in topics_artical[artical]:
             correct += 1
@@ -327,12 +325,12 @@ def main():
     initial_ntk_and_vocabulary()
     initial_W()
     save_topics()
-    liklihood_list, perplexity_list = EM()
-    plot_liklihood(liklihood_list)
-    plot_perlexity(perplexity_list)
+    # liklihood_list, perplexity_list = EM()
+    # plot_liklihood(liklihood_list)
+    # plot_perlexity(perplexity_list)
     hard_assignment_list = hard_assignment()
-    create_matrix()
-    accuracy_calc()
+    create_matrix(hard_assignment_list)
+    accuracy_calc(hard_assignment_list)
 
 
 if __name__ == '__main__':
