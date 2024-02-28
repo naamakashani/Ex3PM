@@ -41,15 +41,16 @@ def initial_ntk_and_vocabulary():
     # open develop.txt file and create dictionary for each article of number of words
     with open('develop.txt', 'r') as file:
         lines = file.read().splitlines()
-        parts = lines[0].split('t')[2:]
+        parts = lines[0].split('\t')[2:]
         topics = []
         for topic in parts:
             # if topic contain '>' remove it
             if '>' in topic:
                 topic = topic.split('>')[0]
-                topics.append(topic)
+            topics.append(topic)
         topics_artical.append(topics)
         start_point = lines[2:]
+        j = 2
         i = 0
         for artical in start_point:
             if i % 4 == 0:
@@ -68,17 +69,18 @@ def initial_ntk_and_vocabulary():
                         word_counts[word] = 1
                 ntk.append(word_counts)
 
-            if i % 2 == 0:
-                parts = artical.split('t')[2:]
+            if j % 4 == 0:
+                parts = artical.split('\t')[2:]
                 topics = []
                 for topic in parts:
                     # if topic contain '>' remove it
                     if '>' in topic:
                         topic = topic.split('>')[0]
-                        topics.append(topic)
+                    topics.append(topic)
                 topics_artical.append(topics)
 
             i += 1
+            j += 1
 
     # filter out words of vocabulary_development that are less than 3
     for key in list(vocabulary_development.keys()):
@@ -199,9 +201,9 @@ def clac_perlexity(log_likelihood):
 
 
 def check_stop_criterion(log_liklihood_list):
-    # return false if the difference between the last two log_liklihood is less than 0.1
+    # return false if the difference between the last two log_liklihood is less than 10
     if len(log_liklihood_list) > 1:
-        if abs(log_liklihood_list[-1] - log_liklihood_list[-2]) < 0.1:
+        if abs(log_liklihood_list[-1] - log_liklihood_list[-2]) < 10:
             return False
     return True
 
@@ -324,11 +326,11 @@ def accuracy_calc():
 def main():
     initial_ntk_and_vocabulary()
     initial_W()
+    save_topics()
     liklihood_list, perplexity_list = EM()
     plot_liklihood(liklihood_list)
     plot_perlexity(perplexity_list)
     hard_assignment_list = hard_assignment()
-    save_topics()
     create_matrix()
     accuracy_calc()
 
