@@ -228,8 +228,7 @@ def EM():
         perlexity = clac_perlexity(log_likelihood)
         pep_list.append(perlexity)
         print("perlexity", perlexity)
-        con_flag = False
-        # con_flag = check_stop_criterion(liklihood_list)
+        con_flag = check_stop_criterion(liklihood_list)
     return liklihood_list, pep_list
 
 
