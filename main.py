@@ -18,17 +18,17 @@ alpha = [0] * 9
 Pik = [{}, {}, {}, {}, {}, {}, {}, {}, {}]
 
 # list of 2124 dictionary for each article create dictionary of words and their counts
-ntk = []
+ntk_dict = []
 
 # dictionary of all words in the develop.txt file after filter out lower than 3
 vocabulary = set()
-
 # list of given topics
 topics = []
-
 # list of header of topics for each article
 topics_artical = []
 clusters_labels = []
+ntk = np.zeros((article_num, 6800))
+
 
 
 def initial_ntk_and_vocabulary():
@@ -68,7 +68,7 @@ def initial_ntk_and_vocabulary():
                     # If the word is not in the dictionary, add it with a count of 1
                     else:
                         word_counts[word] = 1
-                ntk.append(word_counts)
+                ntk_dict.append(word_counts)
 
             if j % 4 == 0:
                 parts = artical.split('\t')[2:]
@@ -90,6 +90,16 @@ def initial_ntk_and_vocabulary():
     vocabulary.update(vocabulary_development.keys())
 
 
+def optimize_ntk():
+    word_to_index = {word: i for i, word in enumerate(vocabulary)}
+    # Fill the array with word counts for each article
+    for i, article in enumerate(ntk_dict):
+        for word, count in article.items():
+            if word in vocabulary:
+                j = word_to_index[word]
+                ntk[i, j] = count
+
+
 def initial_W():
     """
     initial W with modulo-9 manner
@@ -102,10 +112,12 @@ def initial_W():
 def estimation_step():
     k = 10
     log_likelihood = 0
+
     for i in range(article_num):
         Zj = np.zeros(classes_num)
+
         for j in range(classes_num):
-            Zj[j] = np.log(alpha[j]) + np.sum([ntk[i].get(key, 0) * np.log(value) for key, value in Pik[j].items()])
+            Zj[j] = np.log(alpha[j]) + np.sum(ntk[i] * np.log(list(Pik[j].values())))
 
         max_Zj = np.max(Zj)
         Zj -= max_Zj  # Subtract max_Zj from all Zj
@@ -116,6 +128,7 @@ def estimation_step():
 
         W[i] /= sum_all_grader
         log_likelihood += np.log(sum_all_grader) + max_Zj
+
     return log_likelihood
 
 
@@ -127,20 +140,16 @@ def alpha_calc():
 
 
 def p_cal():
-    lamda = 0.01
-    denominators = np.zeros(classes_num)
+    lamda = 0.06
 
-    for i in range(classes_num):
-        for k in range(article_num):
-            denominators[i] += W[k][i] * sum(ntk[k].values())
+    # Calculate denominators using vectorized operations
+    denominators = np.dot(W.T, np.sum(ntk, axis=1))
 
+    # Iterate over each class and word to calculate Pik
     for i in range(classes_num):
-        for word in vocabulary:
-            numerator = 0
-            for k in range(article_num):
-                if word in ntk[k]:
-                    numerator += W[k][i] * ntk[k][word]
-            Pik[i][word] = (numerator + lamda) / float(denominators[i] + lamda * len(vocabulary))
+        for word, real in enumerate(vocabulary):
+            numerator = np.dot(W[:, i], ntk[:, word])
+            Pik[i][word] = (numerator + lamda) / (denominators[i] + lamda * len(vocabulary))
 
 
 def maximiztion_step():
@@ -185,8 +194,8 @@ def clac_perlexity(log_likelihood):
 
 def check_stop_criterion(log_liklihood_list):
     # return false if the difference between the last two log_liklihood is less than 10
-    if len(log_liklihood_list) > 1:
-        if abs(log_liklihood_list[-1] - log_liklihood_list[-2]) < 10:
+    if len(log_liklihood_list) > 2:
+        if abs(log_liklihood_list[-1] - log_liklihood_list[-3]) < 10:
             return False
     return True
 
@@ -198,7 +207,7 @@ def EM():
     liklihood_list = []
     pep_list = []
     while (con_flag):
-        log_likelihood= estimation_step()
+        log_likelihood = estimation_step()
         maximiztion_step()
         # calc_liklihood
         # log_likelihood = calc_log_liklihood()
@@ -289,7 +298,7 @@ def create_matrix(hard_assignment_list):
         # Extract counts from the row and convert to string
         counts = ",".join(str(c) for t, c in row.items())
         # Combine index, counts, and total count
-        line = f"{i},{counts},{counter[i]}"
+        line = f"{counts},{counter[i]}"
         lines.append(line)
 
     # Create header line with topics
@@ -297,10 +306,14 @@ def create_matrix(hard_assignment_list):
     header_line = header_line[1:]
     # sort matrix based on the last element
     sorted_lines = sorted(lines, key=get_last_element, reverse=True)
+    lines_with_row_number = []
+    for i, line in enumerate(sorted_lines):
+        new_line = f"{i}, {line}"
+        lines_with_row_number.append(new_line)
     # Insert header line at the beginning
-    sorted_lines.insert(0, header_line)
+    lines_with_row_number.insert(0, header_line)
     fh = open("matrix.csv", "w")
-    fh.write("\n".join(sorted_lines))
+    fh.write("\n".join(lines_with_row_number))
     fh.close()
 
 
@@ -322,6 +335,7 @@ def accuracy_calc(hard_assignment_list):
 
 def main():
     initial_ntk_and_vocabulary()
+    optimize_ntk()
     initial_W()
     save_topics()
     liklihood_list, perplexity_list = EM()
