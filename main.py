@@ -140,7 +140,7 @@ def p_cal():
             for k in range(article_num):
                 if word in ntk[k]:
                     numerator += W[k][i] * ntk[k][word]
-            Pik[i][word] = (numerator + lamda) / (denominators[i] + lamda * len(vocabulary))
+            Pik[i][word] = (numerator + lamda) / float(denominators[i] + lamda * len(vocabulary))
 
 
 def maximiztion_step():
@@ -200,11 +200,9 @@ def EM():
     while (con_flag):
         log_likelihood= estimation_step()
         maximiztion_step()
-
         # calc_liklihood
         # log_likelihood = calc_log_liklihood()
         liklihood_list.append(log_likelihood)
-
         print("log_likelihood", log_likelihood)
         # calc_perlexity
         perlexity = clac_perlexity(log_likelihood)
