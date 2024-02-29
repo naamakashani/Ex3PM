@@ -100,65 +100,47 @@ def initial_W():
 
 
 def estimation_step():
-    # update the W values using Underflow Scaling
     k = 10
-    # for each artical update the Wi
+    log_likelihood = 0
     for i in range(article_num):
-        list_Zj = []
-        # run for all classes
+        Zj = np.zeros(classes_num)
         for j in range(classes_num):
-            # numerator of the Wi
-            Zit = math.log((alpha[j]))
-            for key, value in Pik[j].items():
-                if key in ntk[i]:
-                    ntk_value = ntk[i][key]
-                else:
-                    ntk_value = 0
-                Zit += float(ntk_value * math.log(value))
-            list_Zj.append(Zit)
+            Zj[j] = np.log(alpha[j]) + np.sum([ntk[i].get(key, 0) * np.log(value) for key, value in Pik[j].items()])
 
-        max_Zit = max(list_Zj)
-        # subtract max_Zit from all Zit
-        new_list_Zj = [x - max_Zit for x in list_Zj]
-        sum_all_grader = 0
-        for m in range(classes_num):
+        max_Zj = np.max(Zj)
+        Zj -= max_Zj  # Subtract max_Zj from all Zj
 
-            if new_list_Zj[m] < -1 * k:
-                W[i][m] = 0
-            else:
-                W[i][m] = math.exp(new_list_Zj[m])
-                sum_all_grader += W[i][m]
-        for m in range(classes_num):
-            W[i][m] = float(W[i][m]) / sum_all_grader
+        mask = Zj < -k
+        W[i] = np.where(mask, 0, np.exp(Zj))
+        sum_all_grader = np.sum(W[i])
+
+        W[i] /= sum_all_grader
+        log_likelihood += np.log(sum_all_grader) + max_Zj
+    return log_likelihood
 
 
 def alpha_calc():
     epsilon = 0.01
-    for i in range(classes_num):
-        sum_class = 0
-        for j in range(article_num):
-            sum_class += W[j][i]
-        if sum_class == 0:
-            alpha[i] = epsilon
-        else:
-            alpha[i] = sum_class / article_num
-    # normalize alpha list
-    sum_alpha = sum(alpha)
-    for i in range(classes_num):
-        alpha[i] = float(alpha[i]) / sum_alpha
+    sum_class = np.sum(W, axis=0, dtype=np.float64)
+    alpha[:] = np.where(sum_class == 0, epsilon, sum_class / float(article_num))
+    alpha[:] /= (np.sum(alpha))
 
 
 def p_cal():
     lamda = 0.01
+    denominators = np.zeros(classes_num)
+
+    for i in range(classes_num):
+        for k in range(article_num):
+            denominators[i] += W[k][i] * sum(ntk[k].values())
+
     for i in range(classes_num):
         for word in vocabulary:
             numerator = 0
-            denominator = 0
             for k in range(article_num):
                 if word in ntk[k]:
-                    numerator += W[k][i] * (ntk[k][word])
-                denominator += W[k][i] * sum(ntk[k].values())
-            Pik[i][word] = float(numerator + lamda) / (denominator + lamda * len(vocabulary))
+                    numerator += W[k][i] * ntk[k][word]
+            Pik[i][word] = (numerator + lamda) / (denominators[i] + lamda * len(vocabulary))
 
 
 def maximiztion_step():
@@ -216,11 +198,11 @@ def EM():
     liklihood_list = []
     pep_list = []
     while (con_flag):
-        estimation_step()
+        log_likelihood= estimation_step()
         maximiztion_step()
 
         # calc_liklihood
-        log_likelihood = calc_log_liklihood()
+        # log_likelihood = calc_log_liklihood()
         liklihood_list.append(log_likelihood)
 
         print("log_likelihood", log_likelihood)
@@ -290,15 +272,15 @@ def create_matrix(hard_assignment_list):
     matrix = [{topic: 0 for topic in topics} for i in range(classes_num)]
     counter = np.zeros(classes_num)
     for i in range(article_num):
-        #find the cluster for the article
+        # find the cluster for the article
         cluster = hard_assignment_list[i]
         counter[cluster] += 1
         # add 1 for all topics in the header of this article
         for topic in topics_artical[i]:
-            #add 1 for each topic on the header of the article
+            # add 1 for each topic on the header of the article
             matrix[cluster][topic] += 1
 
-    #assigne topic for each cluster
+    # assigne topic for each cluster
     for dictionary in matrix:
         max_key = max(dictionary, key=lambda k: dictionary[k])
         clusters_labels.append(max_key)
@@ -315,7 +297,7 @@ def create_matrix(hard_assignment_list):
     # Create header line with topics
     header_line = "," + ",".join(topics)
     header_line = header_line[1:]
-    #sort matrix based on the last element
+    # sort matrix based on the last element
     sorted_lines = sorted(lines, key=get_last_element, reverse=True)
     # Insert header line at the beginning
     sorted_lines.insert(0, header_line)
