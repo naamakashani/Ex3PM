@@ -237,9 +237,8 @@ def plot_liklihood(liklihood_list):
     plt.xlabel('Iteration')
     plt.ylabel('Log Likelihood')
     plt.title('Log Likelihood')
-    plt.show()
-    # save the plot
     plt.savefig('Log_Likelihood.png')
+    plt.show()
 
 
 def plot_perlexity(pep_list):
@@ -247,9 +246,8 @@ def plot_perlexity(pep_list):
     plt.xlabel('Iteration')
     plt.ylabel('Perlexity')
     plt.title('Perlexity')
-    plt.show()
-    # save the plot
     plt.savefig('Perlexity.png')
+    plt.show()
 
 
 def hard_assignment():
